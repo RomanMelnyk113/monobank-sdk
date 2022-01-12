@@ -1,6 +1,8 @@
 package monobank
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -40,4 +42,27 @@ func (c *Client) doReq(path string, method string, body io.Reader) ([]byte, int,
 	defer res.Body.Close()
 	data, err := ioutil.ReadAll(res.Body)
 	return data, res.StatusCode, err
+}
+
+// returns client accounts details
+func (c *Client) GetAccounts() (*UserInfo, error) {
+	path := "/personal/client-info"
+	res, status, err := c.doReq(path, "GET", nil)
+	if err != nil {
+		return nil, err
+	}
+	if status != http.StatusOK {
+		var msg Error
+		if err := json.Unmarshal(res, &msg); err != nil {
+			return nil, errors.New("invalid error payload")
+		}
+		return nil, msg
+	}
+
+	var user UserInfo
+	if err = json.Unmarshal(res, &user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
