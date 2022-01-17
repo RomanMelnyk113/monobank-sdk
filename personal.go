@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 const (
@@ -65,4 +66,27 @@ func (c *Client) GetAccounts() (*UserInfo, error) {
 	}
 
 	return &user, nil
+}
+
+// returns client transactions based on {from} and {to} time
+func (c *Client) GetTransactions(accountId string, from, to time.Time) ([]UserInfo, error) {
+	path := fmt.Sprintf("/personal/statement/%s/%d/%d", accountId, from.Unix(), to.Unix())
+	res, status, err := c.doReq(path, "GET", nil)
+	if err != nil {
+		return nil, err
+	}
+	if status != http.StatusOK {
+		var msg Error
+		if err := json.Unmarshal(res, &msg); err != nil {
+			return nil, errors.New("invalid error payload")
+		}
+		return nil, msg
+	}
+
+	var data []Transaction
+	if err = json.Unmarshal(body, &data); err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
