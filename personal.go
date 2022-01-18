@@ -23,7 +23,7 @@ type Client struct {
 
 func validateErrors(res []byte, err error, status int) error {
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if status != http.StatusOK {
 		var msg Error
@@ -64,7 +64,7 @@ func (c *Client) GetAccounts() (*UserInfo, error) {
 	path := "/personal/client-info"
 	res, status, err := c.doReq(path, "GET", nil)
 
-	if err := validateErrors(res, status); err != nil {
+	if err := validateErrors(res, err, status); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +83,7 @@ func (c *Client) GetTransactions(accountId string, from, to time.Time) ([]Transa
 	if err != nil {
 		return nil, err
 	}
-	if err := validateStatus(res, status); err != nil {
+	if err := validateErrors(res, err, status); err != nil {
 		return nil, err
 	}
 
