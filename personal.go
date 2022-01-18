@@ -59,8 +59,8 @@ func (c *Client) doReq(path string, method string, body io.Reader) ([]byte, int,
 	return data, res.StatusCode, err
 }
 
-// returns client accounts details
-func (c *Client) GetAccounts() (*UserInfo, error) {
+// returns client details
+func (c *Client) GetUserInfo() (*UserInfo, error) {
 	path := "/personal/client-info"
 	res, status, err := c.doReq(path, "GET", nil)
 
