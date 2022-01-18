@@ -21,6 +21,20 @@ type Client struct {
 	token      string
 }
 
+func validateErrors(res []byte, err error, status int) error {
+	if err != nil {
+		return nil, err
+	}
+	if status != http.StatusOK {
+		var msg Error
+		if err := json.Unmarshal(res, &msg); err != nil {
+			return errors.New("invalid error payload")
+		}
+		return msg
+	}
+	return nil
+}
+
 func NewClient(token string) Client {
 	restClient := &http.Client{}
 	return Client{restClient, baseURL, token}
@@ -49,15 +63,9 @@ func (c *Client) doReq(path string, method string, body io.Reader) ([]byte, int,
 func (c *Client) GetAccounts() (*UserInfo, error) {
 	path := "/personal/client-info"
 	res, status, err := c.doReq(path, "GET", nil)
-	if err != nil {
+
+	if err := validateErrors(res, status); err != nil {
 		return nil, err
-	}
-	if status != http.StatusOK {
-		var msg Error
-		if err := json.Unmarshal(res, &msg); err != nil {
-			return nil, errors.New("invalid error payload")
-		}
-		return nil, msg
 	}
 
 	var user UserInfo
@@ -69,22 +77,18 @@ func (c *Client) GetAccounts() (*UserInfo, error) {
 }
 
 // returns client transactions based on {from} and {to} time
-func (c *Client) GetTransactions(accountId string, from, to time.Time) ([]UserInfo, error) {
+func (c *Client) GetTransactions(accountId string, from, to time.Time) ([]Transaction, error) {
 	path := fmt.Sprintf("/personal/statement/%s/%d/%d", accountId, from.Unix(), to.Unix())
 	res, status, err := c.doReq(path, "GET", nil)
 	if err != nil {
 		return nil, err
 	}
-	if status != http.StatusOK {
-		var msg Error
-		if err := json.Unmarshal(res, &msg); err != nil {
-			return nil, errors.New("invalid error payload")
-		}
-		return nil, msg
+	if err := validateStatus(res, status); err != nil {
+		return nil, err
 	}
 
 	var data []Transaction
-	if err = json.Unmarshal(body, &data); err != nil {
+	if err = json.Unmarshal(res, &data); err != nil {
 		return nil, err
 	}
 
