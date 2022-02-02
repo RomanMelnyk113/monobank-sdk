@@ -1,3 +1,3 @@
-module RomanMelnyk113/monobank-sdk
+module github.com/RomanMelnyk113/monobank-sdk
 
 go 1.16
